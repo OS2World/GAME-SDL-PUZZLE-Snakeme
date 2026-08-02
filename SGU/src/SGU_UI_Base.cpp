@@ -708,13 +708,13 @@ void CUIScreen::ProcessDefaultEvent(SDL_Event *ev,SDL_Surface *ScrInfo)
 			{
 				if (ev->key.keysym.sym==SDLK_TAB)
 				{
-					Uint8 *keys;
+					const Uint8 *keys;
 					Uint8 mousestate=SDL_GetMouseState(&mx,&my);
-					keys = SDL_GetKeyState(NULL);
+					keys = SDL_GetKeyboardState(NULL);
 
 					objects[focuswgt]->SendMessage(UIEV_LOSEFOCUS,0,0,ScrInfo);
 					// SHIFT TAB pour -1, TAB pour +1
-					if (keys[SDLK_LSHIFT] == SDL_PRESSED)
+					if (keys[SDL_SCANCODE_LSHIFT] == SDL_PRESSED)
 					{
 						focuswgt=(focuswgt+nobject-1)%nobject;
 					}
@@ -729,7 +729,8 @@ void CUIScreen::ProcessDefaultEvent(SDL_Event *ev,SDL_Surface *ScrInfo)
 					clicked=focuswgt;
 				}
 			}
-			char c=(char)ev->key.keysym.unicode;
+			/* keysym.unicode removed in SDL2; approximate with lower byte of sym */
+			char c=(char)(ev->key.keysym.sym & 0xFF);
 			keyhit=focuswgt;
 			objects[focuswgt]->SendMessage(UIEV_CHAR,c,0,ScrInfo);
 			SDL_UpdateRect(ScrInfo,0,0,0,0);

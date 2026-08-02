@@ -12,6 +12,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#ifdef IS_OS2_HOST
+#include <unistd.h>
+#endif
 
 #include "SGU_List.h"
 #include "SnakeUI.h"
@@ -26,6 +29,17 @@
 StringTable lang;
 CUITheme *theme;
 SDL_Surface *ScrInfo;
+#ifdef IS_OS2_HOST
+SDL_Window  *snakeme_window   = NULL;
+SDL_Surface *snakeme_logical  = NULL;   /* 640x480 back-buffer; game renders here */
+
+void snakeme_update_window(void)
+{
+    SDL_Surface *ws = SDL_GetWindowSurface(snakeme_window);
+    SDL_BlitScaled(snakeme_logical, NULL, ws, NULL);
+    SDL_UpdateWindowSurface(snakeme_window);
+}
+#endif
 SGU_Sprite *bigfont;
 SGU_Sprite *middlefont;
 SGU_Sprite *littlefont;
@@ -1278,6 +1292,8 @@ void SnakeMainInterface(SDL_Event ev)
 			}
 		}
 		break;
+	default:
+		break;
 	}
 };
 
@@ -1397,6 +1413,8 @@ void SnakeMeDraw(void)
 			}
 		}
 		break;
+	default:
+		break;
 	}
 
 };
@@ -1478,6 +1496,14 @@ int main( int argc, char* argv[] )
     }
 	else
 	{
+#ifdef IS_OS2_HOST
+		/* All data files live in data/ next to the exe. Switch CWD so every
+		   relative-path fopen/Load/Mix call finds them without source changes. */
+		if (chdir("data") != 0)
+			fprintf(stderr,"DAT : Warning: could not chdir to data/ -- files may not be found\n");
+		else
+			printf("DAT : CWD set to data/\n");
+#endif
 		if (noaudio)
 		{
 			printf("SDL : SDL correctly initialized without audio support\n");
@@ -1495,7 +1521,37 @@ int main( int argc, char* argv[] )
 	SDL_EnableUNICODE(true);
 	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY,SDL_DEFAULT_REPEAT_INTERVAL);
 
-	// Initialize the display in a 640x480 16 mode
+	// Initialize the display: 960x720 (1.5x logical 640x480) fits a 768-line desktop
+#ifdef IS_OS2_HOST
+	{
+		SDL_Rect usable = {0, 0, 1440, 768};
+		SDL_GetDisplayUsableBounds(0, &usable);
+		int wx = usable.x + (usable.w - 960) / 2;
+		if (wx < 0) wx = 0;
+		/* Center vertically; guarantee at least 40px top margin so the PM
+		   title bar is visible and the window sits noticeably off the top edge. */
+		int wy = usable.y + (usable.h - 720) / 2;
+		if (wy < 40) wy = 40;
+		snakeme_window = SDL_CreateWindow("SnakeMe", wx, wy, 960, 720, 0);
+	}
+	if (snakeme_window == NULL)
+	{
+		fprintf(stderr, "VID : Couldn't create window: %s\n", SDL_GetError());
+		exit(1);
+	}
+	{
+		SDL_Surface *ws = SDL_GetWindowSurface(snakeme_window);
+		snakeme_logical = SDL_CreateRGBSurfaceWithFormat(0, 640, 480, 32,
+		    ws->format->format);
+		if (snakeme_logical == NULL)
+		{
+			fprintf(stderr, "VID : Couldn't create back-buffer: %s\n", SDL_GetError());
+			exit(1);
+		}
+	}
+	screen = snakeme_logical;
+	printf("VID : Screen set to 960x720 window (640x480 logical back-buffer, 1.5x scale)\n");
+#else
     if (fullscreen)
 	{
 		screen = SDL_SetVideoMode(640, 480, 16, SDL_FULLSCREEN); // SDL_HWSURFACE|SDL_ANYFORMAT
@@ -1511,6 +1567,7 @@ int main( int argc, char* argv[] )
 		fprintf(stderr, "VID : Couldn't set 640x480x16 video mode: %s\n",SDL_GetError());
 		exit(1);
 	}
+#endif
 
 	ScrInfo=screen;
 
@@ -1615,6 +1672,22 @@ int main( int argc, char* argv[] )
 			fclose(fp);
 			SwapLittleEndianKeys(&(PlayerButtons[0]));
 			SwapLittleEndianKeys(&(PlayerButtons[1]));
+			/* SDL1 special keycodes were 128-511; SDL2 uses 0x40000000+.
+			   If any key falls in that stale range the file is from SDL1 -- reset. */
+			{
+				bool sdl1file = false;
+				for (int pb=0; pb<2 && !sdl1file; pb++) {
+					SDLKey *kp = &PlayerButtons[pb].Aright;
+					for (int k=0; k<7 && !sdl1file; k++) {
+						SDLKey v = kp[k];
+						if (v > 127 && v < (SDLKey)(1<<30)) sdl1file = true;
+					}
+				}
+				if (sdl1file) {
+					printf("CTL : SDL1 control.ctl detected -- resetting to defaults\n");
+					SetDefaultKeys();
+				}
+			}
 		}
 		else
 		{

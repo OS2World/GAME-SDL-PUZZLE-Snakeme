@@ -1,0 +1,94 @@
+# Makefile.os2 -- SnakeMe for ArcaOS/OS2, GCC 9.2/kLIBC + SDL2
+
+CXX = g++
+RC  = wrc
+
+DEFINES = -DVERSION=\"1.0.0\" -DIS_OS2_HOST
+
+WARNFLAGS = -Wall \
+            -Wno-unused-variable \
+            -Wno-unused-but-set-variable \
+            -Wno-deprecated-declarations \
+            -Wno-dangling-else \
+            -Wno-parentheses \
+            -Wno-narrowing \
+            -Wno-write-strings \
+            -Wno-sign-compare \
+            -Wno-sequence-point
+
+# -include src/os2compat.h: force-include SDL1->SDL2 shim before every source file
+# -Isrc:        game headers (also where os2compat.h now lives)
+# -ISGU/include: SGU public API
+# -ISGU/src:    SGU internal headers
+# -I/@unixroot/usr/include/SDL2: bare "SDL.h" resolves here
+override CXXFLAGS = -O2 -MMD -MP $(WARNFLAGS) \
+                    -Isrc \
+                    -ISGU/include \
+                    -ISGU/src \
+                    -I/@unixroot/usr/include \
+                    -I/@unixroot/usr/include/SDL2 \
+                    -include src/os2compat.h \
+                    $(DEFINES) \
+                    -std=c++11
+
+LDFLAGS = -Zomf -Zhigh-mem -Zmap
+
+LIBS    = /@unixroot/usr/lib/SDL2_dll.a \
+          /@unixroot/usr/lib/SDL2_mixer_dll.a
+
+TARGET  = snakeme.exe
+
+# SGU library sources (bundled, compiled directly into the exe)
+SGUSRCS = \
+    SGU/src/SGU_GenUtils.cpp \
+    SGU/src/SGU_List.cpp \
+    SGU/src/SGU_Math.cpp \
+    SGU/src/SGU_Sprite.cpp \
+    SGU/src/SGU_UI_Base.cpp \
+    SGU/src/SGU_UI_SDB.cpp \
+    SGU/src/SGU_UI_Theme.cpp \
+    SGU/src/SGU_UI_WGButton.cpp \
+    SGU/src/SGU_UI_WGFile.cpp \
+    SGU/src/SGU_UI_WGIntBar.cpp \
+    SGU/src/SGU_UI_WGList.cpp \
+    SGU/src/SGU_UI_WGScrollBar.cpp \
+    SGU/src/SGU_UI_WGText.cpp \
+    SGU/src/SGU_UI_WGValueBar.cpp
+
+# Game sources (excludes SnakeMeSvr.cpp/SDLNet and SnakeMeDemo.cpp)
+GAMESRCS = \
+    src/CAliveSnake.cpp \
+    src/CSnakeArray.cpp \
+    src/CSnakeEngine.cpp \
+    src/CSnakePowerUp.cpp \
+    src/SnakeUI.cpp \
+    src/CDeadSnake.cpp \
+    src/CSnake.cpp \
+    src/CSnakeLevelEditor.cpp \
+    src/SnakeMe.cpp \
+    src/StringTable.cpp
+
+SRCS = $(SGUSRCS) $(GAMESRCS)
+OBJS = $(SRCS:.cpp=.obj)
+
+all: $(TARGET)
+
+snakeme.res: src/snakeme.rc icons/snakeme.ico
+	$(RC) -r -fo=$@ src/snakeme.rc
+
+$(TARGET): $(OBJS) src/snakeme.def snakeme.res
+	$(CXX) $(LDFLAGS) -o $@ $(OBJS) $(LIBS) src/snakeme.def
+	$(RC) snakeme.res $@
+
+%.obj: %.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+clean:
+	-rm -f SGU/src/*.obj SGU/src/*.d
+	-rm -f src/*.obj src/*.d
+	-rm -f $(TARGET) snakeme.map snakeme.res
+
+.PHONY: all clean
+
+DEPFILES = $(OBJS:.obj=.d)
+-include $(DEPFILES)

@@ -115,7 +115,7 @@ void List::Clear(void)
 void *List::GetElementN(int n)
 {
 	int m=0;
-	void *el;
+	void *el=NULL;
 	for (lpListNode c=Head;(c&&m<=n);c=c->Next)
 	{
 		el=c->Element;

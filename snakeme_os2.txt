@@ -1,0 +1,123 @@
+SnakeMe 1.0.0 - ArcaOS / OS2 Port
+===================================
+
+
+DESCRIPTION
+-----------
+
+SnakeMe is a multiplayer snake game originally written for SDL 1.x.
+This port updates the game to run on ArcaOS and OS/2 using SDL2, while
+preserving the original gameplay and assets unchanged.
+
+Changes from the original source:
+  - SDL1 to SDL2 API migration via compatibility shim (src/os2compat.h)
+  - Windowed display at 960x720 (1.5x scale of the 640x480 logical canvas)
+  - Back-buffer rendering with SDL_BlitScaled for proper scaling
+  - OS/2 WLINK linker support via Makefile.os2 and src/snakeme.def
+  - Data files separated into data/ subdirectory
+
+
+BUILD REQUIREMENTS
+------------------
+
+  - ArcaOS or OS/2 with GCC 9.2 (kLIBC toolchain)
+  - SDL2 DLL and development headers  (SDL2200.DLL)
+  - SDL2_mixer DLL and development headers  (SDL2M200.DLL)
+  - WLINK (Open Watcom linker, accessed via EMXOMFLD)
+  - GNU make (available via kLIBC/ANPM)
+
+
+BUILD INSTRUCTIONS
+------------------
+
+1. Open an OS/2 command prompt and navigate to the project root:
+
+      cd x:\SNAKEME
+
+2. Run the build script:
+
+      compile-snakeme.cmd
+
+   This sets the required EMXOMFLD environment variables and calls
+   GNU make with Makefile.os2. Build output is written to compile-snakeme.log.
+
+3. On success the message "Build OK." appears and snakeme.exe is created
+   in the project root.
+
+   To rebuild from scratch:
+
+      compile-snakeme.cmd clean
+      compile-snakeme.cmd
+
+
+INSTALLATION
+------------
+
+Copy snakeme.exe into the snakeme\ directory (where the data files live), OR
+keep snakeme.exe in the project root and ensure a data\ subdirectory exists
+containing all the game assets:
+
+   snakeme\           <- game directory on ArcaOS
+     snakeme.exe      <- the built executable
+     data\
+       fntbigb.spr
+       fntltlw.spr
+       fntmdlw.spr
+       fond01.spr
+       ctrltype.spr
+       ctrlwho.spr
+       ctrlwho1J.spr
+       ctrlwho2J.spr
+       lvledit.spr
+       lang.txt
+       JINGLE.XM
+       0.wav .. 5.wav
+       *.sml  *.smt  *.snk  *.ctl
+
+The executable switches its working directory to data\ on startup so all
+relative file paths resolve correctly.
+
+
+RUNNING
+-------
+
+Double-click snakeme.exe from the WPS, or from a command prompt:
+
+       snakeme.exe
+
+The game opens a 960x720 window (the original 640x480 canvas scaled 1.5x).
+
+
+KNOWN LIMITATIONS
+-----------------
+
+  - Network multiplayer (SnakeMeSvr) is not built; SDLNet is not available
+    on OS/2 and the server source is excluded from the OS/2 Makefile.
+  - The demo mode (SnakeMeDemo) is also excluded.
+  - Joystick support compiles in but is untested.
+  - A control.ctl saved by the original SDL1 release will be ignored on
+    first launch (SDL1 keycodes are incompatible with SDL2); the game
+    resets to default key bindings automatically and saves a new file
+    on the next Controls -> Save.
+
+
+FILES
+-----
+
+  Makefile.os2          GNU Makefile for the ArcaOS/OS2 build
+  compile-snakeme.cmd   Build wrapper that sets EMXOMFLD variables
+  src/snakeme.def       OS/2 module definition file (BLDLEVEL, STACKSIZE)
+  src/os2compat.h       SDL1 -> SDL2 compatibility shim (force-included)
+  snakeme_os2.txt       This file
+
+
+AUTHORS
+-----
+
+Original game by Cecile Grivaz, Stephane Magnenat, Lynda Metref, Gabriel Walt (2000).
+ArcaOS/OS2 port by OS2World (2026).
+
+LINKS
+-----
+* https://stephane.magnenat.net/archives/snakeme/index.html
+* https://github.com/OS2World/GAME-SDL-PUZZLE-Snakeme 
