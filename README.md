@@ -1,16 +1,16 @@
 # SnakeMe
 
-Copyright 2000 Cécile Grivaz, Stéphane Magnenat, Lynda Metref, Gabriel Walt.
-All rights reserved.
-
-## Preamble
-
-This is the source code of my vintage snake game, back from year 2000!
+Source code of my vintage snake game, back from year 2000!
 I have corrected it so that it compiles without warnings with modern compilers and works on 64 bit platforms.
 Yet, the C++ dialect is antique and the whole thing very dirty.
 It is on github for the preservation of our common digital legacy.
 
 [Stéphane Magnenat](http://stephane.magnenat.net)
+
+![Snakeme ScreenShot](/doc/Snakeme.png)
+Copyright 2000 Cécile Grivaz, Stéphane Magnenat, Lynda Metref, Gabriel Walt.
+All rights reserved.
+
 
 ## Notes
 
