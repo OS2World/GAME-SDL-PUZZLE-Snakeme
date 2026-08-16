@@ -8,6 +8,7 @@ It is on github for the preservation of our common digital legacy.
 [Stéphane Magnenat](http://stephane.magnenat.net)
 
 ![Snakeme ScreenShot](/doc/Snakeme.png)
+
 Copyright 2000 Cécile Grivaz, Stéphane Magnenat, Lynda Metref, Gabriel Walt.
 All rights reserved.
 
